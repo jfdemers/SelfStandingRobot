@@ -27,15 +27,6 @@ class MyCallbacks : public BLECharacteristicCallbacks
 
     sprintf(buffer, "x: %i; y: %i\n", (int)x, (int)y);
 
-    if (x < 0 || y < 0)
-    {
-      Serial.println("x or y is negative");
-    }
-    else
-    {
-      Serial.println("Both values are positive.");
-    }
-
     Serial.println(buffer);
   }
 };
