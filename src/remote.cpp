@@ -8,29 +8,62 @@
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
-#define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define SERVICE_UUID "4b541423-23b7-48e7-8a4c-a00ef3c23c7b"
+#define AXIS1_CHARACTERISTIC_UUID "e9047fc4-b82f-490c-9732-9089231ad245"
+#define AXIS2_CHARACTERISTIC_UUID "31e7f1fc-ac15-4004-8e2f-6de012658ff9"
+#define BATTERY_CHARACTERISTIC_UUID "206027d7-f0b5-4645-94f9-91e8f40324c4"
+#define LOG_CHARACTERISTIC_UUID "0ea15bc2-78c0-4812-9eea-73378fd09455"
+
+class MyCallbacks : public BLECharacteristicCallbacks
+{
+  void onWrite(BLECharacteristic *pCharacteristic)
+  {
+    std::string value = pCharacteristic->getValue();
+
+    if (value.length() > 0)
+    {
+      Serial.println("*********");
+      Serial.print("New value: ");
+      for (int i = 0; i < value.length(); i++)
+        Serial.print(value[i]);
+
+      Serial.println();
+      Serial.println("*********");
+    }
+  }
+};
 
 void Remote::setup()
 {
-  Serial.println("Starting BLE work!");
+  Serial.println("Starting BLE for remote control.");
 
-  BLEDevice::init("Long name works now");
+  BLEDevice::init("Self Standing Robot");
   BLEServer *pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
-  BLECharacteristic *pCharacteristic = pService->createCharacteristic(
-      CHARACTERISTIC_UUID,
-      BLECharacteristic::PROPERTY_READ |
-          BLECharacteristic::PROPERTY_WRITE);
 
-  pCharacteristic->setValue("Hello World says Neil");
+  BLECharacteristic *pAxis1Characteristic = pService->createCharacteristic(
+      AXIS1_CHARACTERISTIC_UUID,
+      BLECharacteristic::PROPERTY_WRITE);
+  pAxis1Characteristic->setCallbacks(new MyCallbacks());
+
+  BLECharacteristic *pAxis2Characteristic = pService->createCharacteristic(
+      AXIS2_CHARACTERISTIC_UUID,
+      BLECharacteristic::PROPERTY_WRITE);
+  pAxis2Characteristic->setCallbacks(new MyCallbacks());
+
+  BLECharacteristic *pBatteryCharacteristic = pService->createCharacteristic(
+      BATTERY_CHARACTERISTIC_UUID,
+      BLECharacteristic::PROPERTY_NOTIFY);
+
   pService->start();
-  // BLEAdvertising *pAdvertising = pServer->getAdvertising();  // this still is working for backward compatibility
+
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->setScanResponse(true);
   pAdvertising->setMinPreferred(0x06); // functions that help with iPhone connections issue
   pAdvertising->setMinPreferred(0x12);
   BLEDevice::startAdvertising();
-  Serial.println("Characteristic defined! Now you can read it in your phone!");
+
+  Serial.println("Characteristics defined. You can now control from phone.");
 }
