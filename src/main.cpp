@@ -4,14 +4,15 @@
 
 Robot robot;
 
-void setup() {
+void setup()
+{
   robot.setup();
 }
 
-void loop() {
-  robot.run();
+void loop()
+{
+  //robot.run();
 }
-
 
 /*#include <Arduino.h>
 #include <stdlib.h>

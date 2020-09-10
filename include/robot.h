@@ -5,8 +5,10 @@
 
 #include "motors.h"
 #include "mpu.h"
+#include "remote.h"
 
-class Robot {
+class Robot
+{
 public:
   Robot();
 
@@ -47,6 +49,7 @@ private:
 
   Motors motors;
   MPU mpu;
+  Remote remote;
 };
 
 #endif

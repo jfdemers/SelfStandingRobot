@@ -1,18 +1,20 @@
+#include <Arduino.h>
+
 #include "robot.h"
 
 #include "display.h"
 #include "motors.h"
 #include "mpu.h"
 
-#define DISPLAY_SPEED
+//#define DISPLAY_SPEED
 //#define CALCTIME
 
 float power = 0;
 float increment = 0.01;
 
-#define K_p 0.15f   // 15 original
+#define K_p 0.15f // 15 original
 #define K_i 1.0f  // 100 original
-#define K_d 0.0f   // 0.15 original
+#define K_d 0.0f  // 0.15 original
 #define MaxAngleOffset 5.5f
 #define wheelRateGain 0.003f
 #define wheelPosGain 0.0015f
@@ -20,7 +22,8 @@ float increment = 0.01;
 #define DT 5000 // 5 msec time step
 #define FHz 200 // Sample Rate
 
-Robot::Robot() {
+Robot::Robot()
+{
   // Set an initial value of 10V. It will change rapidly once we
   // start taking measurement.
   voltage = 11;
@@ -38,48 +41,52 @@ Robot::Robot() {
   TurnTorque = 0;
 }
 
-void Robot::setup() {
-  Serial.begin(SerialSpeed);
+void Robot::setup()
+{
+  Serial.begin(115200);
   // Wait before sending commands to the display.
-  delay(100);
-  Display::setDisplay(Display::no_cursor);
+  // delay(100);
+  //Display::setDisplay(Display::no_cursor);
 
-  motors.initialize();
+  /*motors.initialize();
   motors.stop();
-  motors.standby();
+  motors.standby();*/
 
-  mpu.initialize();
+  //mpu.initialize();
 
-  Display::clear();
-  Display::setPos(2, 0);
+  //Display::clear();
+  //Display::setPos(2, 0);
   Serial.print("Lay robot down");
-  Display::setPos(0, 1);
+  //Display::setPos(0, 1);
   Serial.print("and press button");
-  pinMode(LED_BUILTIN, OUTPUT);
 
-  waitForButton();
+  //waitForButton();
 
-  Display::clear();
-  Display::setPos(0, 0);
+  //Display::clear();
+  //Display::setPos(0, 0);
   Serial.print("Calibrating gyro");
 
-  while (mpu.calibrateYGyro()) {
+  /*while (mpu.calibrateYGyro())
+  {
+  }*/
 
-  }
+  //standUp();
 
-  standUp();
+  //motors.resume();
 
-  motors.resume();
-
-  Display::clear();
-  Display::setPos(0,0);
+  //Display::clear();
+  //Display::setPos(0, 0);
   Serial.print("Voltage:");
+
+  remote.setup();
 
   lastTime = micros();
 }
 
-void Robot::run() {
-  if (stopped) {
+void Robot::run()
+{
+  if (stopped)
+  {
     return;
   }
 
@@ -91,34 +98,41 @@ void Robot::run() {
   mpu.readIMUData();
   kalmanFilter(mpu.getAccAngle(), mpu.getGyroRate());
 
-  if (millis() - voltageTimer > 1000) {
-    if (!checkVoltage()) {
+  if (millis() - voltageTimer > 1000)
+  {
+    if (!checkVoltage())
+    {
       stopAll();
     }
     voltageTimer = millis();
   }
 
-  #ifndef CALCTIME
-  if (millis() - voltageTimerOut > 10000) {
+#ifndef CALCTIME
+  if (millis() - voltageTimerOut > 10000)
+  {
     Display::setPos(9, 1);
-    Serial.print(voltage, 1); Serial.print("V");
+    Serial.print(voltage, 1);
+    Serial.print("V");
     voltageTimerOut = millis();
   }
-  #endif
+#endif
 
-  if (PitchEst < -45 || PitchEst > 45) {  // Robot has fallen down
+  if (PitchEst < -45 || PitchEst > 45)
+  { // Robot has fallen down
     motors.stop();
     motors.reset();
 
     // Reset integrator and encoder position
     IntState = 0;
 
-    PosCmd = 0; rotationCmd = 0;
+    PosCmd = 0;
+    rotationCmd = 0;
 
-    standUp();  // Ask user to stand robot back up
+    standUp(); // Ask user to stand robot back up
     return;
   }
-  else {
+  else
+  {
 
     // Filter ThrottleIn and convert to AOCmd
     /*if (ThrottleIn > 800 && ThrottleIn < 2200 && !RechargeBattery) {  // Valid range
@@ -141,25 +155,27 @@ void Robot::run() {
     }*/
     AOCmd = 0;
 
-    AngleOffset = constrain(AOCmd, -MaxAngleOffset, MaxAngleOffset);  // Limits throttle input
+    AngleOffset = constrain(AOCmd, -MaxAngleOffset, MaxAngleOffset); // Limits throttle input
 
-    if (abs(AOCmd) > 1.0f) { // If angle offset command greater than 1 deg, then commanding forward/reverse motion
-       PosCmd = motors.getWheelPosition() + 1.0f * motors.getVelocity();  // Set encoder position command to a location ahead of robot,
-                                                      // allowing robot to drift to a new location when stopping
-       AngleOffset -=  motors.getVelocity() * wheelRateGain;
+    if (abs(AOCmd) > 1.0f)
+    {                                                                   // If angle offset command greater than 1 deg, then commanding forward/reverse motion
+      PosCmd = motors.getWheelPosition() + 1.0f * motors.getVelocity(); // Set encoder position command to a location ahead of robot,
+                                                                        // allowing robot to drift to a new location when stopping
+      AngleOffset -= motors.getVelocity() * wheelRateGain;
     }
-    else { // Stop robot
+    else
+    { // Stop robot
       // Apply encoder feedback outer loop
-      AngleOffset -= (motors.getWheelPosition() - PosCmd) * wheelPosGain  + motors.getVelocity() * wheelRateGain;  // PD controller
+      AngleOffset -= (motors.getWheelPosition() - PosCmd) * wheelPosGain + motors.getVelocity() * wheelRateGain; // PD controller
     }
-    AngleOffset = constrain(AngleOffset, -MaxAngleOffset, MaxAngleOffset);  // Additional limiter after outer loop
+    AngleOffset = constrain(AngleOffset, -MaxAngleOffset, MaxAngleOffset); // Additional limiter after outer loop
 
     Error = AngleOffset - PitchEst;
     //Error = 0 - PitchEst;
     IntState = IntState + Error / FHz;
     IntState = constrain(IntState, -5.0f, 5.0f);
 
-    TorqueCMD = K_p * Error + K_i * IntState - K_d * mpu.getGyroRate();  // PID Feedback Control
+    TorqueCMD = K_p * Error + K_i * IntState - K_d * mpu.getGyroRate(); // PID Feedback Control
 
     // Filter SteeringIn and convert to TurnTorque
     /*if (SteeringIn > 800 && SteeringIn < 2200 && !RechargeBattery) {  // Valid range
@@ -208,15 +224,17 @@ void Robot::run() {
   }
   motors.setPower(1.0f * direction, 1.0f * direction);*/
 
-  #ifdef CALCTIME
+#ifdef CALCTIME
   static unsigned long CalcTime, MaxCalcTime, AveCalcTime, TimeCounter, NumSamples;
   CalcTime = micros() - lastTime;
-  if (MaxCalcTime < CalcTime) {
+  if (MaxCalcTime < CalcTime)
+  {
     MaxCalcTime = CalcTime;
   }
   AveCalcTime += CalcTime;
   NumSamples++;
-  if ((millis() - TimeCounter) > 1000) {
+  if ((millis() - TimeCounter) > 1000)
+  {
     TimeCounter = millis();
     AveCalcTime /= NumSamples;
     Display::clear();
@@ -231,15 +249,16 @@ void Robot::run() {
     MaxCalcTime = 0;
     AveCalcTime = 0;
   }
-  #endif
+#endif
 
-  while (micros() - lastTime < DT) {
-
+  while (micros() - lastTime < DT)
+  {
   }
   lastTime = micros();
 }
 
-bool Robot::checkVoltage() {
+bool Robot::checkVoltage()
+{
   // Filter the voltage value in case we have a bad reading. If the value
   // is ok, it will soon be reflected in the voltage value.
   float currentValue = analogRead(VoltSensorPin) * voltageUnit;
@@ -247,14 +266,16 @@ bool Robot::checkVoltage() {
 
   MotorScaleFactor = 11.8f / voltage;
 
-  if (voltage < 10) {
+  if (voltage < 10)
+  {
     return false;
   }
 
   return true;
 }
 
-void Robot::stopAll() {
+void Robot::stopAll()
+{
   stopped = true;
   motors.stop();
 
@@ -263,32 +284,38 @@ void Robot::stopAll() {
   Serial.print("Error");
 }
 
-void Robot::waitForButton() {
+void Robot::waitForButton()
+{
   // This is not the most efficient way to read the value of the pin, we could
   // just take the digital value, but it's not recommended to take digital
   // readings when we use the analog function on the chip because it can cause
   // invalid readings.
-  while (analogRead(PushButtonPin) < 800) {
+  while (analogRead(PushButtonPin) < 800)
+  {
   }
-  while (analogRead(PushButtonPin) > 600) {
-
+  while (analogRead(PushButtonPin) > 600)
+  {
   }
 }
 
-void Robot::standUp() {
+void Robot::standUp()
+{
   Display::clear();
   Display::setPos(0, 0);
   Serial.print("Stand & Push Btn");
 
   int button_pushed = 0;
   unsigned long timer;
-  while (!button_pushed) {  // Calculate and display pitch until button pushed
+  while (!button_pushed)
+  { // Calculate and display pitch until button pushed
     timer = millis();
     PitchEst = 0;
-    for (int i = 0; i < 50; i++) {  // Average 50 samples
+    for (int i = 0; i < 50; i++)
+    { // Average 50 samples
       mpu.readIMUData();
       PitchEst += mpu.getAccAngle();
-      if (analogRead(PushButtonPin) > 800) {
+      if (analogRead(PushButtonPin) > 800)
+      {
         button_pushed = 1;
       }
     }
@@ -297,8 +324,10 @@ void Robot::standUp() {
     Display::setPos(0, 1);
     Serial.print("Pitch: ");
     Serial.print(PitchEst);
-    while (millis() < timer + 250) {
-      if (analogRead(PushButtonPin) > 800) {
+    while (millis() < timer + 250)
+    {
+      if (analogRead(PushButtonPin) > 800)
+      {
         button_pushed = 1;
       }
     }
@@ -306,8 +335,9 @@ void Robot::standUp() {
   BiasEst = 0;
 }
 
-  void Robot::kalmanFilter(float pitchMeas, float rateMeas) {
-    /*
+void Robot::kalmanFilter(float pitchMeas, float rateMeas)
+{
+  /*
      * Steady State Kalman Filter -- Hard code gains into function
      *
      * [pitch; bias]_(k+1) = A * [pitch; bias]_(k) + B * rate_meas + G * w
@@ -327,13 +357,13 @@ void Robot::standUp() {
      * dt = 0.01;
      * then: K = dlqe(A,G,C,Q,R) = [0.033810; -0.025380];
      */
-      const float dt = 0.005;
-      const float K[2] = {0.016905, -0.012690}; // Gains originally calculated for 100 Hz,
-      // Divide by 2 for 200 Hz gains
-      float y = pitchMeas - PitchEst;
-      PitchEst += dt * (rateMeas - BiasEst);
-      PitchEst += K[0] * y;
-      BiasEst  += K[1] * y;
+  const float dt = 0.005;
+  const float K[2] = {0.016905, -0.012690}; // Gains originally calculated for 100 Hz,
+  // Divide by 2 for 200 Hz gains
+  float y = pitchMeas - PitchEst;
+  PitchEst += dt * (rateMeas - BiasEst);
+  PitchEst += K[0] * y;
+  BiasEst += K[1] * y;
 
-      //PitchEst = pitchMeas;
-  }
+  //PitchEst = pitchMeas;
+}
