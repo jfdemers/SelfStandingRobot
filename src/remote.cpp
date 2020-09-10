@@ -18,18 +18,25 @@ class MyCallbacks : public BLECharacteristicCallbacks
 {
   void onWrite(BLECharacteristic *pCharacteristic)
   {
-    std::string value = pCharacteristic->getValue();
+    char *data = (char *)pCharacteristic->getData();
 
-    if (value.length() > 0)
+    signed char x = data[0];
+    signed char y = data[1];
+
+    char buffer[64];
+
+    sprintf(buffer, "x: %i; y: %i\n", (int)x, (int)y);
+
+    if (x < 0 || y < 0)
     {
-      Serial.println("*********");
-      Serial.print("New value: ");
-      for (int i = 0; i < value.length(); i++)
-        Serial.print(value[i]);
-
-      Serial.println();
-      Serial.println("*********");
+      Serial.println("x or y is negative");
     }
+    else
+    {
+      Serial.println("Both values are positive.");
+    }
+
+    Serial.println(buffer);
   }
 };
 
