@@ -56,7 +56,7 @@ module wheel(radius = 45, thickness=13, wall = 3, shaft = 2.5, hub_wall = 3, hub
         union() {
             wheel_hub(wheel=thickness, hub=hub_extra, shaft=shaft, wall=hub_wall);
             wheel_contour(thickness=thickness - 2 * lip, wall=wall, radius = radius, lip = lip, lip_height = lip_height);
-            wheel_spokes(thickness=thickness, wall=wall, radius=radius, hub=shaft+hub_wall, count=spokes);
+            wheel_spokes(thickness=thickness, wall=wall, radius=radius, hub=shaft+hub_wall, count=spokes, offset=thickness / 2 + 1);
         }
 }
 
@@ -66,6 +66,6 @@ color("orange")
     translate([2.25,0,0]) tire();
 }
 
-$fn=200;
+$fn=360;
 //wheel_tire();
 wheel(spokes=6);
