@@ -1,72 +1,71 @@
 // Create a tire with the specified radius r, height h and thread height th.
-module tire(r=50, h=10, th=2) {
+module tire(r=45, thickness=2, h=8.5, th=2) {
     perimeter = 2 * PI * r;
     thread_spacing = 3 * 360 / perimeter;
     
     rotate([0,90,0])
         union() {
             difference() {
-                cylinder(r=r, h=h);
-                translate([0, 0, -0.5]) cylinder(r=r-2, h=h+1);
+                cylinder(r=r+thickness, h=h);
+                translate([0, 0, -0.5]) cylinder(r=r, h=h+1);
             }
             
             for (i = [0:thread_spacing:360]) {
                     rotate([0, 0, i])
-                        translate([r-0.5, 0, 0])
+                        translate([r+thickness-0.5, 0, 0])
                             cube([th, 1.0, h]);
             }
         }
 }
 
-module wheel_hole() {
-    difference() {
-        scale([5, 1]) circle(r=6);
-        translate([0, -5]) square([25,10]);
+
+module wheel_hub(wheel=10, hub=5, shaft=2.5, wall=3) {
+    translate([0, 0, -hub])
+        rotate_extrude() {
+            translate([shaft, 0, 0])
+                square([wall, wheel+hub]);
+        }
+}
+
+module wheel_contour(thickness=10, wall=3, radius=45, lip=2, lip_height=2) {
+    rotate_extrude() {
+        polygon([[radius-wall, 0], [radius+lip_height, 0], [radius+lip_height, lip], [radius, lip], [radius, lip+thickness], [radius+lip_height, lip+thickness], [radius+lip_height, 2*lip+thickness], [radius-wall, 2*lip+thickness]]);
     }
 }
 
-module wheel_dent(r, h) {
-    rotate_extrude()
-        translate([r-2, 0, 0])
-            square([3, h-2]);
+module wheel_spoke(thickness=10, wall=3, radius=45, hub=5, angle=30, offset=5) {
+    rotate_extrude(angle=angle) {
+        translate([hub - 0.1, 0])
+            square([radius - hub - wall + 0.2, thickness - offset]);
+    }
 }
 
-module wheel_design(r, h, hub) {
-    c_radius = (r - 2 - hub) / 2 - 3;
+module wheel_spokes(thickness=10, wall=3, radius=45, hub=5, count=6, offset=5) {
+    angle = 360 / count / 2;
 
     union() {
-        for (i=[0:20]) {
-            rotate([0, 0, i * 360 / 20])
-            translate([hub + 3 + c_radius, 0, -0.5])
-                linear_extrude(h+1)
-                    scale([1, 0.1])
-                        circle(r=c_radius);
+        for (i = [0:count]) {
+            rotate([0, 0, 2 * i * angle])
+                wheel_spoke(thickness, wall, radius, hub, angle, offset);
         }
     }
 }
 
-module wheel_hub(r, h) {
-    cylinder(r=r, h=h);
-}
-
-module wheel(r=50, h=12, hub=4) {
-    rotate([0,90,0])
-        difference() {
-            cylinder(r=r, h=h);
-            translate([0, 0, 1]) wheel_dent(r,h);
-            wheel_design(r, h, hub);
-            translate([0, 0, -0.5]) wheel_hub(r=hub, h=h+1);
+module wheel(radius = 45, thickness=13, wall = 3, shaft = 2.5, hub_wall = 3, hub_extra = 2, spokes = 6, lip = 2, lip_height = 2) {
+    rotate([0, 90, 0])
+        union() {
+            wheel_hub(wheel=thickness, hub=hub_extra, shaft=shaft, wall=hub_wall);
+            wheel_contour(thickness=thickness - 2 * lip, wall=wall, radius = radius, lip = lip, lip_height = lip_height);
+            wheel_spokes(thickness=thickness, wall=wall, radius=radius, hub=shaft+hub_wall, count=spokes);
         }
 }
 
-module wheel_tire(r=50, h=12, hub=2) {
-color("gray") wheel(r=r,h=h,hub=hub);
+module wheel_tire() {
+color("gray") wheel();
 color("orange")
-    translate([1.25,0,0]) tire(r=r, h=h-2.5);
+    translate([2.25,0,0]) tire();
 }
 
 $fn=200;
-
 //wheel_tire();
-wheel();
-//wheel_design(50,12,4);
+wheel(spokes=6);
