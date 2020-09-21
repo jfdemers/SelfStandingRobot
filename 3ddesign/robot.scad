@@ -10,7 +10,7 @@ module tire(r=45, thickness=2, h=8.5, th=2) {
                 translate([0, 0, -0.5]) cylinder(r=r, h=h+1);
             }
             
-            for (i = [0:thread_spacing:360]) {
+            for (i = [0:thread_spacing:360 - thread_spacing]) {
                     rotate([0, 0, i])
                         translate([r+thickness-0.5, 0, 0])
                             cube([th, 1.0, h]);
@@ -67,5 +67,5 @@ color("orange")
 }
 
 $fn=360;
-//wheel_tire();
-wheel(spokes=6);
+wheel_tire();
+//wheel(spokes=6);
