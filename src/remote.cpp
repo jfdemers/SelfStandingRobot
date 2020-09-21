@@ -41,12 +41,12 @@ void Remote::setup()
 
   BLECharacteristic *pAxis1Characteristic = pService->createCharacteristic(
       AXIS1_CHARACTERISTIC_UUID,
-      BLECharacteristic::PROPERTY_WRITE);
+      BLECharacteristic::PROPERTY_WRITE_NR);
   pAxis1Characteristic->setCallbacks(new MyCallbacks());
 
   BLECharacteristic *pAxis2Characteristic = pService->createCharacteristic(
       AXIS2_CHARACTERISTIC_UUID,
-      BLECharacteristic::PROPERTY_WRITE);
+      BLECharacteristic::PROPERTY_WRITE_NR);
   pAxis2Characteristic->setCallbacks(new MyCallbacks());
 
   BLECharacteristic *pBatteryCharacteristic = pService->createCharacteristic(
