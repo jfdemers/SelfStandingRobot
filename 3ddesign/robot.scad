@@ -70,7 +70,14 @@ module nut_holder() {
     cube([7, 10, 10]);
 }
 
-function circumscribed_polygon(r=1, f=6) = [for (i = [0:f]) [cos(i * 360 / f) * r, sin(i * 360 / f) * r]];
+module circumscribed_polygon(r=1, f=6) {
+    a = [for (i = [0:f]) [cos(i * 360 / f) * r, sin(i * 360 / f) * r]];
+    polygon(a);
+} 
+
+module m3_nut(margin = 0) {
+    linear_extrude(2.4) circumscribed_polygon(r=(6.35 + margin) / 2, f=6);
+}
 
 module right_plate() {
     cube([60, 150, 4]);
@@ -83,6 +90,4 @@ $fn=360;
 //wheel(spokes=6);
 //right_plate();
 
-linear_extrude(1) polygon(circumscribed_polygon(4,8));
-
-echo(a);
+m3_nut();
