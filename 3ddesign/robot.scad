@@ -61,11 +61,22 @@ module wheel(radius = 45, thickness=13, wall = 3, shaft = 2.5, hub_wall = 3, hub
 }
 
 module wheel_tire() {
-color("gray") wheel();
-color("orange")
-    translate([2.25,0,0]) tire();
+    color("gray") wheel();
+    color("orange")
+        translate([2.25,0,0]) tire();
+}
+
+module nut_holder() {
+    cube([7, 10, 10]);
+}
+
+module right_plate() {
+    cube([60, 150, 4]);
+    translate([53, 0, 4]) nut_holder();
+    translate([53, 140, 4]) nut_holder();
 }
 
 $fn=360;
-wheel_tire();
+//wheel_tire();
 //wheel(spokes=6);
+right_plate();
