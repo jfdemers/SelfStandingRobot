@@ -104,7 +104,7 @@ module breadboard_row(pins) {
 
 module medium_breadboard() {
     center = 63 / 2;
-    x_offset = (94 - 29 * 2.54 - 1.8) / 2 + 2.54 / 2;
+    x_offset = (94 - 29 * 2.54) / 2;
     y_offset = 2.54 + 2.54 / 2;
 
     hole_offset = 4;
@@ -113,9 +113,7 @@ module medium_breadboard() {
         union() {
             color("red") cube([94, 63, 1.6]);
             for (y = [0:4]) {
-                for (x = [0:29]) {
-                    translate([x_offset, center + y_offset + y * 2.54, 0]) breadboard_row(30);
-                }
+                translate([x_offset, center + y_offset + y * 2.54, 0]) breadboard_row(30);
             }
 
             for (y = [0:4]) {
@@ -136,7 +134,23 @@ module medium_breadboard() {
 }
 
 module small_breadboard() {
+    center = 33 / 2;
+    x_offset = (46 - 16 * 2.54) / 2;
+    y_offset = 2.54 + 2.54 / 2;
+    hole_offset = 4;
 
+    difference() {
+        union() {
+            color("red") cube([46, 33, 1.6]);
+            for (y = [0:4]) {
+                translate([x_offset, center + y_offset + y * 2.54, 0]) breadboard_row(17);
+                translate([x_offset, center - y_offset - y * 2.54, -0.005]) breadboard_row(17);
+            }
+        }
+
+        translate([hole_offset, center, -0.05]) cylinder(r=1.6, h=1.7);
+        translate([46 - hole_offset, center, -0.05]) cylinder(r=1.6, h=1.7);
+    }
 }
 
 wall_thickness = 3;
@@ -155,4 +169,4 @@ $fn=360;
 //right_plate();
 
 //back_side();
-medium_breadboard();
+small_breadboard();
