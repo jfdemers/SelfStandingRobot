@@ -79,10 +79,74 @@ module m3_nut(margin = 0) {
     linear_extrude(2.4) circumscribed_polygon(r=(6.35 + margin) / 2, f=6);
 }
 
+module m3_screw_in_hole(depth = 8) {
+    difference() {
+        cylinder(r=5, h=depth);
+        cylinder(r=2.5, h=depth);
+    }
+}
+
 module right_plate() {
     cube([60, 150, 4]);
     translate([53, 0, 4]) nut_holder();
     translate([53, 140, 4]) nut_holder();
+}
+
+module breadboard_row(pins) {
+    color("gold") {
+        for (i = [0:pins - 1]) {
+            translate([2.54 * i, 0, 0]) {
+                cylinder(r=0.9, h=1.61);
+            }
+        }
+    }
+}
+
+module medium_breadboard() {
+    center = 63 / 2;
+    x_offset = (94 - 29 * 2.54 - 1.8) / 2 + 2.54 / 2;
+    y_offset = 2.54 + 2.54 / 2;
+
+    hole_offset = 4;
+
+    difference() {
+        union() {
+            color("red") cube([94, 63, 1.6]);
+            for (y = [0:4]) {
+                for (x = [0:29]) {
+                    translate([x_offset, center + y_offset + y * 2.54, 0]) breadboard_row(30);
+                }
+            }
+
+            for (y = [0:4]) {
+                translate([x_offset, center - y_offset - y * 2.54, -0.005]) breadboard_row(30);
+            }
+
+            for (y = [0:1]) {
+                translate([x_offset, center + y_offset + (7 + y) * 2.54, -0.005]) breadboard_row(30);
+                translate([x_offset, center - y_offset - (7 + y) * 2.54, -0.005]) breadboard_row(30);
+            }
+        }
+
+        translate([hole_offset, hole_offset, -0.05]) cylinder(r=3.7/2, h=1.7);
+        translate([hole_offset, 63 - hole_offset, -0.05]) cylinder(r=3.7/2, h=1.7);
+        translate([94 - hole_offset, hole_offset, -0.05]) cylinder(r=3.7/2, h=1.7);
+        translate([94 - hole_offset, 63 - hole_offset, -0.05]) cylinder(r=3.7/2, h=1.7);
+    }
+}
+
+module small_breadboard() {
+
+}
+
+wall_thickness = 3;
+robot_height = 100;
+robot_width = 100;
+
+module back_side() {
+    union() {
+        cube([robot_width, robot_height, wall_thickness]);
+    }
 }
 
 $fn=360;
@@ -90,4 +154,5 @@ $fn=360;
 //wheel(spokes=6);
 //right_plate();
 
-m3_nut();
+//back_side();
+medium_breadboard();
