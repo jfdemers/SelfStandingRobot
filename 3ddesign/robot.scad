@@ -92,69 +92,83 @@ module right_plate() {
     translate([53, 140, 4]) nut_holder();
 }
 
-module breadboard_row(pins) {
+module breadboard_row(pins, height) {
     color("gold") {
         for (i = [0:pins - 1]) {
             translate([2.54 * i, 0, 0]) {
-                cylinder(r=0.9, h=1.61);
+                cylinder(r=0.9, h=height + 0.1);
             }
         }
     }
 }
 
+function medium_breadboard_size() = [94, 63, 1.6];
+function medium_breadboard_holes() = [[4, 4],[4, 63 - 4],[94 - 4, 4],[94 - 4, 63 - 4]];
+
 module medium_breadboard() {
-    center = 63 / 2;
-    x_offset = (94 - 29 * 2.54) / 2;
+    width = medium_breadboard_size()[0];
+    height = medium_breadboard_size()[1];
+    depth = medium_breadboard_size()[2];
+
+    center = height / 2;
+    x_offset = (width - 29 * 2.54) / 2;
     y_offset = 2.54 + 2.54 / 2;
 
     hole_offset = 4;
 
     difference() {
         union() {
-            color("red") cube([94, 63, 1.6]);
+            color("red") cube([width, height, depth]);
             for (y = [0:4]) {
-                translate([x_offset, center + y_offset + y * 2.54, 0]) breadboard_row(30);
+                translate([x_offset, center + y_offset + y * 2.54, 0]) breadboard_row(30, depth);
             }
 
             for (y = [0:4]) {
-                translate([x_offset, center - y_offset - y * 2.54, -0.005]) breadboard_row(30);
+                translate([x_offset, center - y_offset - y * 2.54, -0.005]) breadboard_row(30, depth);
             }
 
             for (y = [0:1]) {
-                translate([x_offset, center + y_offset + (7 + y) * 2.54, -0.005]) breadboard_row(30);
-                translate([x_offset, center - y_offset - (7 + y) * 2.54, -0.005]) breadboard_row(30);
+                translate([x_offset, center + y_offset + (7 + y) * 2.54, -0.005]) breadboard_row(30, depth);
+                translate([x_offset, center - y_offset - (7 + y) * 2.54, -0.005]) breadboard_row(30, depth);
             }
         }
 
-        translate([hole_offset, hole_offset, -0.05]) cylinder(r=3.7/2, h=1.7);
-        translate([hole_offset, 63 - hole_offset, -0.05]) cylinder(r=3.7/2, h=1.7);
-        translate([94 - hole_offset, hole_offset, -0.05]) cylinder(r=3.7/2, h=1.7);
-        translate([94 - hole_offset, 63 - hole_offset, -0.05]) cylinder(r=3.7/2, h=1.7);
+        for (pos = medium_breadboard_holes()) {
+            translate([pos[0], pos[1], -0.05]) cylinder(r=3.7/2, h=1.7);
+        }
     }
 }
 
+function small_breadboard_size() = [46, 33, 1.6];
+function small_breadboard_holes() = [[4, 33 / 2],[46 - 4, 33 / 2]];
+
 module small_breadboard() {
-    center = 33 / 2;
-    x_offset = (46 - 16 * 2.54) / 2;
+    width = small_breadboard_size()[0];
+    height = small_breadboard_size()[1];
+    depth = small_breadboard_size()[2];
+
+    center = height / 2;
+    x_offset = (width - 16 * 2.54) / 2;
     y_offset = 2.54 + 2.54 / 2;
     hole_offset = 4;
 
     difference() {
         union() {
-            color("red") cube([46, 33, 1.6]);
+            color("red") cube([width, height, depth]);
             for (y = [0:4]) {
-                translate([x_offset, center + y_offset + y * 2.54, 0]) breadboard_row(17);
-                translate([x_offset, center - y_offset - y * 2.54, -0.005]) breadboard_row(17);
+                translate([x_offset, center + y_offset + y * 2.54, 0]) breadboard_row(17, depth);
+                translate([x_offset, center - y_offset - y * 2.54, -0.005]) breadboard_row(17, depth);
             }
         }
 
-        translate([hole_offset, center, -0.05]) cylinder(r=1.6, h=1.7);
-        translate([46 - hole_offset, center, -0.05]) cylinder(r=1.6, h=1.7);
+        for (pos = small_breadboard_holes()) {
+            translate([pos[0], pos[1], -0.05]) cylinder(r=3.7/2, h=1.7);
+        }
     }
 }
 
 wall_thickness = 3;
-robot_height = 115;
+robot_height = 105;
 robot_width = 100;
 
 module back_side() {
@@ -162,14 +176,14 @@ module back_side() {
         cube([robot_width, robot_height, wall_thickness]);
         
         // Mounts for the medium board
-        translate([7, 108, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
-        translate([7, 53, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
-        translate([93, 108, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
-        translate([93, 53, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        for (h = medium_breadboard_holes()) {
+            translate([h[0] + (robot_width - medium_breadboard_size()[0]) / 2, h[1] + (robot_height - 3 - medium_breadboard_size()[1]), wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        }
 
         // Mounts for the small board
-        translate([7, 16.5 + 3,wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
-        translate([45, 16.5 + 3,wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        for (h = small_breadboard_holes()) {
+            translate([3 + h[0], 3 + h[1], wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        }
 
         // Mounts for tur drop down converter
     }
@@ -184,6 +198,6 @@ $fn=360;
 //small_breadboard();
 back_side();
 
-translate([3, 49, 11.1]) medium_breadboard();
+translate([(robot_width - medium_breadboard_size()[0]) / 2, robot_height - 3 - medium_breadboard_size()[1], 11.1]) medium_breadboard();
 translate([3, 3, 11.1]) small_breadboard();
 
