@@ -154,16 +154,24 @@ module small_breadboard() {
 }
 
 wall_thickness = 3;
-robot_height = 100;
+robot_height = 115;
 robot_width = 100;
 
 module back_side() {
     union() {
         cube([robot_width, robot_height, wall_thickness]);
-        translate([7, 93, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
-        translate([7, 38, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
-        translate([93, 93, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
-        translate([93, 38, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        
+        // Mounts for the medium board
+        translate([7, 108, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        translate([7, 53, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        translate([93, 108, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        translate([93, 53, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+
+        // Mounts for the small board
+        translate([7, 16.5 + 3,wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        translate([45, 16.5 + 3,wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+
+        // Mounts for tur drop down converter
     }
 }
 
@@ -176,5 +184,6 @@ $fn=360;
 //small_breadboard();
 back_side();
 
-translate([3, 34, 11.1]) medium_breadboard();
+translate([3, 49, 11.1]) medium_breadboard();
+translate([3, 3, 11.1]) small_breadboard();
 
