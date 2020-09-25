@@ -81,8 +81,8 @@ module m3_nut(margin = 0) {
 
 module m3_screw_in_hole(depth = 8) {
     difference() {
-        cylinder(r=5, h=depth);
         cylinder(r=2.5, h=depth);
+        translate([0, 0, -0.1]) cylinder(r=1.25, h=depth + 0.2);
     }
 }
 
@@ -160,6 +160,10 @@ robot_width = 100;
 module back_side() {
     union() {
         cube([robot_width, robot_height, wall_thickness]);
+        translate([7, 93, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        translate([7, 38, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        translate([93, 93, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        translate([93, 38, wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
     }
 }
 
@@ -169,4 +173,8 @@ $fn=360;
 //right_plate();
 
 //back_side();
-small_breadboard();
+//small_breadboard();
+back_side();
+
+translate([3, 34, 11.1]) medium_breadboard();
+
