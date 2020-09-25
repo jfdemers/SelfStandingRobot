@@ -171,7 +171,12 @@ wall_thickness = 3;
 robot_height = 105;
 robot_width = 100;
 
+function step_down_size() = [43, 21.5, 1.6];
+function step_down_holes() = [[6, 21.5 - 2.5], [43 - 6, 2.5]];
+
 module back_side() {
+    lower_margin = (robot_width - small_breadboard_size()[0] - step_down_size()[0]) / 3;
+
     union() {
         cube([robot_width, robot_height, wall_thickness]);
         
@@ -182,10 +187,13 @@ module back_side() {
 
         // Mounts for the small board
         for (h = small_breadboard_holes()) {
-            translate([3 + h[0], 3 + h[1], wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+            translate([lower_margin + h[0], 3 + h[1], wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
         }
 
-        // Mounts for tur drop down converter
+        // Mounts for the drop down converter
+        for (h = step_down_holes()) {
+            translate([robot_width - step_down_size()[0] - lower_margin + h[0], 3 + h[1], wall_thickness - 0.01]) color("gray") m3_screw_in_hole(8);
+        }
     }
 }
 
@@ -199,5 +207,5 @@ $fn=360;
 back_side();
 
 translate([(robot_width - medium_breadboard_size()[0]) / 2, robot_height - 3 - medium_breadboard_size()[1], 11.1]) medium_breadboard();
-translate([3, 3, 11.1]) small_breadboard();
+translate([(robot_width - small_breadboard_size()[0] - step_down_size()[0]) / 3, 3, 11.1]) small_breadboard();
 
