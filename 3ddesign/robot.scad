@@ -167,7 +167,7 @@ module small_breadboard() {
     }
 }
 
-wall_thickness = 3;
+wall_thickness = 2;
 robot_height = 105;
 robot_width = 100;
 
@@ -197,15 +197,21 @@ module back_side() {
     }
 }
 
+module side() {
+    cube([])
+}
+
+module robot() {
+    back_side();
+
+    translate([(robot_width - medium_breadboard_size()[0]) / 2, robot_height - 3 - medium_breadboard_size()[1], 10.1]) medium_breadboard();
+    translate([(robot_width - small_breadboard_size()[0] - step_down_size()[0]) / 3, 3, 10.1]) small_breadboard();
+}
+
 $fn=360;
+
 //wheel_tire();
 //wheel(spokes=6);
 //right_plate();
-
 //back_side();
-//small_breadboard();
-back_side();
-
-translate([(robot_width - medium_breadboard_size()[0]) / 2, robot_height - 3 - medium_breadboard_size()[1], 11.1]) medium_breadboard();
-translate([(robot_width - small_breadboard_size()[0] - step_down_size()[0]) / 3, 3, 11.1]) small_breadboard();
-
+robot();
