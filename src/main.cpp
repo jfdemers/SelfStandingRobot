@@ -301,10 +301,10 @@ void IRAM_ATTR stepperTimer() {
     throttle_counter_left_motor = 0;                                        //Reset the throttle_counter_left_motor variable
     throttle_left_motor_memory = throttle_left_motor;                       //Load the next throttle_left_motor variable
     if(throttle_left_motor_memory < 0){     
-        digitalWrite(STEP2_DIR, LOW);                                //If the throttle_left_motor_memory is negative
+        digitalWrite(STEP2_DIR, HIGH);                                //If the throttle_left_motor_memory is negative
       throttle_left_motor_memory *= -1;                                     //Invert the throttle_left_motor_memory variable
     }
-    else digitalWrite(STEP2_DIR, HIGH);                                               //Set output 3 high for a forward direction of the stepper motor
+    else digitalWrite(STEP2_DIR, LOW);                                               //Set output 3 high for a forward direction of the stepper motor
   }
   else if(throttle_counter_left_motor == 1) digitalWrite(STEP2_PULSE, HIGH);//Set output 2 high to create a pulse for the stepper controller
   else if(throttle_counter_left_motor == 2) digitalWrite(STEP2_PULSE, LOW);             //Set output 2 low because the pulse only has to last for 20us 
