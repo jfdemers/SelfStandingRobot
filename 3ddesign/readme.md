@@ -1,6 +1,6 @@
 # Small breadboard
 Small breadboard are 33mmx46mm.  
-Holes are centered at 16.5mm and center hole 4mm from long edge.  
+Holes are centered at 16.5mm and 37mm apart from each other on the long side.
 Holes have a diameter of about 3.2mm.
 
 # Medium breadboard
