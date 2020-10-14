@@ -4,7 +4,7 @@ Holes are centered at 16.5mm and center hole 4mm from long edge.
 Holes have a diameter of about 3.2mm.
 
 # Medium breadboard
-Medium breadboard are 63mmx94mm.  
+Medium breadboard are 64mmx94mm. Holes are at 86mm(center) from each other and 56mm(center) from each other.
 Holes have a diameter of about 3.7mm.  
 Holes are located at 4mm from the board edges.
 
