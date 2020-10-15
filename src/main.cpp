@@ -25,8 +25,8 @@ int gyro_address = 0x68;                                     //MPU-6050 I2C addr
 int acc_calibration_value = 906;                             //Enter the accelerometer calibration value
 
 //Various settings
-float pid_p_gain = 15;                                       //Gain setting for the P-controller (15)
-float pid_i_gain = 1.5;                                      //Gain setting for the I-controller (1.5)
+float pid_p_gain = 30;                                       //Gain setting for the P-controller (15)
+float pid_i_gain = 0.75;                                      //Gain setting for the I-controller (1.5)
 float pid_d_gain = 30;                                       //Gain setting for the D-controller (30)
 float turning_speed = 30;                                    //Turning speed (20)
 float max_target_speed = 150;                                //Max target speed (100)
@@ -64,7 +64,7 @@ void setup(){
   //To create a variable pulse for controlling the stepper motors a timer is created that will execute a piece of code (subroutine) every 20us
   hw_timer_t *timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &stepperTimer, true);
-  timerAlarmWrite(timer, 20, true);
+  timerAlarmWrite(timer, 50, true);
   timerAlarmEnable(timer);
   
   //By default the MPU-6050 sleeps. So we have to wake it up.
@@ -95,7 +95,7 @@ void setup(){
   pinMode(LED_BUILTIN, OUTPUT);
 
   for(receive_counter = 0; receive_counter < 500; receive_counter++){       //Create 500 loops
-    if(receive_counter % 15 == 0)digitalWrite(13, !digitalRead(13));        //Change the state of the LED every 15 loops to make the LED blink fast
+    if(receive_counter % 15 == 0)digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));        //Change the state of the LED every 15 loops to make the LED blink fast
     Wire.beginTransmission(gyro_address);                                   //Start communication with the gyro
     Wire.write(0x43);                                                       //Start reading the Who_am_I register 75h
     Wire.endTransmission();                                                 //End the transmission
@@ -210,8 +210,8 @@ void loop(){
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Control calculations
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  pid_output_left = pid_output;                                             //Copy the controller output to the pid_output_left variable for the left motor
-  pid_output_right = pid_output;                                            //Copy the controller output to the pid_output_right variable for the right motor
+  pid_output_left = pid_output / 3;                                             //Copy the controller output to the pid_output_left variable for the left motor
+  pid_output_right = pid_output / 3;                                            //Copy the controller output to the pid_output_right variable for the right motor
 
   if(received_byte & B00000001){                                            //If the first bit of the receive byte is set change the left and right variable to turn the robot to the left
     pid_output_left += turning_speed;                                       //Increase the left motor speed
@@ -266,20 +266,36 @@ void loop(){
   throttle_left_motor = left_motor;
   throttle_right_motor = right_motor;
 
-  if (loopCount % 250 == 0) {
-      Serial.print("Batt: ");
-      Serial.println(low_bat);
+  #ifdef DEBUG_LOOP 
+    if (loopCount % 125 == 0) {
+      /*Serial.print("Batt: ");
+      Serial.println(low_bat);*/
 
       Serial.print("PID right: ");
       Serial.println(pid_output_right);
 
       Serial.print("PID left: ");
-      Serial.println(pid_output_left);     
+      Serial.println(pid_output_left);
 
-      Serial.print("Interrupt count: ");
-      Serial.println(intCount); 
-  }
+      /*Serial.print("Interrupt count: ");
+      Serial.println(intCount); */
 
+      Serial.print("Angle gyro: ");
+      Serial.println(angle_gyro);
+
+      Serial.print("Angle acc: ");
+      Serial.println(angle_acc);
+
+      Serial.print("pid_error_temp: ");
+      Serial.println(pid_error_temp);
+
+      Serial.print("pid_setpoint: ");
+      Serial.println(pid_setpoint);
+
+      Serial.print("self_balance_pid_setpoint: ");
+      Serial.println(self_balance_pid_setpoint);
+    }
+  #endif
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Loop time timer
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
