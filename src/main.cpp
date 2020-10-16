@@ -12,6 +12,7 @@
 
 #include <Arduino.h>
 #include <Wire.h>                                            //Include the Wire.h library so we can communicate with the gyro
+#include <DabbleESP32.h>
 
 void IRAM_ATTR stepperTimer();
 
@@ -25,8 +26,8 @@ int gyro_address = 0x68;                                     //MPU-6050 I2C addr
 int acc_calibration_value = 906;                             //Enter the accelerometer calibration value
 
 //Various settings
-float pid_p_gain = 30;                                       //Gain setting for the P-controller (15)
-float pid_i_gain = 0.75;                                      //Gain setting for the I-controller (1.5)
+float pid_p_gain = 37.5;                                       //Gain setting for the P-controller (15)
+float pid_i_gain = 0.6;                                      //Gain setting for the I-controller (1.5)
 float pid_d_gain = 30;                                       //Gain setting for the D-controller (30)
 float turning_speed = 30;                                    //Turning speed (20)
 float max_target_speed = 150;                                //Max target speed (100)
@@ -60,6 +61,8 @@ void setup(){
   Serial.begin(115200);                                                       //Start the serial port at 9600 kbps
   Wire.begin();                                                             //Start the I2C bus as master
   Wire.setClock(400000);                                                           
+
+  Dabble.begin("Self Balancing Robot");
 
   //To create a variable pulse for controlling the stepper motors a timer is created that will execute a piece of code (subroutine) every 20us
   hw_timer_t *timer = timerBegin(0, 80, true);
@@ -115,25 +118,50 @@ void setup(){
 //Main program loop
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loop(){
-  if(Serial.available()){                                                   //If there is serial data available
-    received_byte = Serial.read();                                          //Load the received serial data in the received_byte variable
-    receive_counter = 0;                                                    //Reset the receive_counter variable
+  Dabble.processInput();
+
+  if (GamePad.isRightPressed()) {
+      received_byte |= B00000010;
+      receive_counter = 0;
   }
+
+  if (GamePad.isLeftPressed()) {
+      received_byte |= B00000001;
+      receive_counter = 0;
+  }
+
+  if (GamePad.isUpPressed()) {
+      received_byte |= B00000100;
+      receive_counter = 0;
+  }
+
+  if (GamePad.isDownPressed()) {
+      received_byte |= B00001000;
+      receive_counter = 0;
+  }
+
+  if(!(received_byte & B00001100)){                                         //Slowly reduce the setpoint to zero if no foreward or backward command is given
+    if(pid_setpoint > 0.5)pid_setpoint -=0.05;                              //If the PID setpoint is larger then 0.5 reduce the setpoint with 0.05 every loop
+    else if(pid_setpoint < -0.5)pid_setpoint +=0.05;                        //If the PID setpoint is smaller then -0.5 increase the setpoint with 0.05 every loop
+    else pid_setpoint = 0;                                                  //If the PID setpoint is smaller then 0.5 or larger then -0.5 set the setpoint to 0
+  }
+
   if(receive_counter <= 25)receive_counter ++;                              //The received byte will be valid for 25 program loops (100 milliseconds)
   else received_byte = 0x00;                                                //After 100 milliseconds the received byte is deleted
   
   //Load the battery voltage to the battery_voltage variable.
   //85 is the voltage compensation for the diode.
-  //Resistor voltage divider => (3.3k + 3.3k)/2.2k = 2.5
-  //12.5V equals ~5V @ Analog 0.
-  //12.5V equals 1023 analogRead(0).
-  //1250 / 1023 = 1.222.
-  //The variable battery_voltage holds 1050 if the battery voltage is 10.5V.
-  battery_voltage = (analogRead(0) * 1.222) + 85;
+  //Resistor voltage divider => 2.2k / (2.2k + 7.5k) = 0.2268
+  //12.5V equals ~2.84V @ Analog 0.
+  //12.5V equals 3517 analogRead(0).
+  //10.5V equals 2.38V at analogRead(0)
+  //2.38V at analogRead(0) = 2953
+  //The variable battery_voltage holds 2953 if the battery voltage is 10.5V.
+  battery_voltage = analogRead(GPIO_NUM_36);
   
-  if(battery_voltage < 1050 && battery_voltage > 800){                      //If batteryvoltage is below 10.5V and higher than 8.0V
+  if(battery_voltage < 2950 && battery_voltage > 800){                      //If batteryvoltage is below 10.5V and higher than 8.0V
     digitalWrite(LED_BUILTIN, HIGH);                                                 //Turn on the led if battery voltage is to low
-    //low_bat = 1;                                                            //Set the low_bat variable to 1
+    low_bat = 1;                                                            //Set the low_bat variable to 1
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,34 +294,44 @@ void loop(){
   throttle_left_motor = left_motor;
   throttle_right_motor = right_motor;
 
+  #define DEBUG_LOOP
   #ifdef DEBUG_LOOP 
-    if (loopCount % 125 == 0) {
+    if (loopCount % 50 == 0) {
       /*Serial.print("Batt: ");
       Serial.println(low_bat);*/
 
-      Serial.print("PID right: ");
+      /*Serial.print("PID right: ");
       Serial.println(pid_output_right);
 
       Serial.print("PID left: ");
-      Serial.println(pid_output_left);
+      Serial.println(pid_output_left);*/
 
       /*Serial.print("Interrupt count: ");
       Serial.println(intCount); */
 
-      Serial.print("Angle gyro: ");
-      Serial.println(angle_gyro);
+      /*Serial.print("Angle gyro: ");
+      Serial.println(angle_gyro);*/
 
-      Serial.print("Angle acc: ");
-      Serial.println(angle_acc);
+      /*Serial.print("Angle acc: ");
+      Serial.println(angle_acc);*/
 
-      Serial.print("pid_error_temp: ");
-      Serial.println(pid_error_temp);
+      /*Serial.print("pid_error_temp: ");
+      Serial.println(pid_error_temp);*/
 
-      Serial.print("pid_setpoint: ");
-      Serial.println(pid_setpoint);
+      /*Serial.print("pid_setpoint: ");
+      Serial.println(pid_setpoint);*/
 
-      Serial.print("self_balance_pid_setpoint: ");
-      Serial.println(self_balance_pid_setpoint);
+      /*Serial.print("self_balance_pid_setpoint: ");
+      Serial.println(self_balance_pid_setpoint);*/
+
+      /*Serial.print("Received byte: ");
+      Serial.println(received_byte);*/
+
+      Serial.print("Battery value: ");
+      Serial.println(battery_voltage);
+
+      Serial.print("Batt low: ");
+      Serial.println(low_bat);
     }
   #endif
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
